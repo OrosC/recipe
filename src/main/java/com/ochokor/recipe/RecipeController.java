@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,70 +25,69 @@ public class RecipeController {
 
     private RecipeService recipeService;
 
+    @ResponseStatus(HttpStatus.OK)
     @GetMapping
     public List<Recipe> retrieveAllRecipes() {
         log.info("Calling get request to retrieve all recipes");
         return recipeService.getAllRecipes();
     }
 
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(value = "/add", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity addNewRecipe(@RequestBody RecipeValueObject recipeValueObject) {
+    public void addNewRecipe(@RequestBody RecipeValueObject recipeValueObject) {
 
         log.info("Calling post request to add new recipe {}", recipeValueObject.name);
         recipeService.saveRecipe(recipeValueObject);
-        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(value = "/addAll", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity addNewRecipes(@RequestBody List<RecipeValueObject> recipeValueObject) {
+    public void addNewRecipes(@RequestBody List<RecipeValueObject> recipeValueObject) {
 
         recipeService.saveRecipes(recipeValueObject);
-        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
+    @ResponseStatus(HttpStatus.OK)
     @GetMapping("/find")
-    public ResponseEntity<Recipe> findRecipe(@RequestParam String name) {
+    public Recipe findRecipe(@RequestParam String name) {
 
         log.info("Retrieve data for recipe {}", name);
-        Recipe recipe = recipeService.findRecipeByName(name);
-        return ResponseEntity.ok().body(recipe);
+        return recipeService.findRecipeByName(name);
     }
 
+    @ResponseStatus(HttpStatus.OK)
     @GetMapping("/find-ingredients")
-    public ResponseEntity<Set<Ingredient>> retrieveIngredientsForRecipes(@RequestParam String recipeName) {
+    public Set<Ingredient> retrieveIngredientsForRecipes(@RequestParam String recipeName) {
         log.info("Calling get request to retrieve all ingredients for recipe {}", recipeName);
-        Set<Ingredient> ingredients = recipeService.findRecipeByName(recipeName).getIngredients();
-        return ResponseEntity.ok().body(ingredients);
+        return recipeService.findRecipeByName(recipeName).getIngredients();
     }
 
+    @ResponseStatus(HttpStatus.OK)
     @PutMapping("/update-recipe-name")
-    public ResponseEntity<Recipe> updateRecipeName(@RequestParam String name, @RequestParam String newName) {
+    public Recipe updateRecipeName(@RequestParam String name, @RequestParam String newName) {
 
-        log.info("Retrieve data for recipe {}", name);
-        Recipe recipe = recipeService.updateRecipeName(name, newName);
-        log.info("Updated the name of the recipe");
-        return ResponseEntity.ok().body(recipe);
+        log.info("Updating the name of recipe {} to {}", name, newName);
+        return recipeService.updateRecipeName(name, newName);
     }
 
+    @ResponseStatus(HttpStatus.OK)
     @PatchMapping("/{name}/update-recipe-details")
-    public ResponseEntity<Recipe> updateRecipe(@PathVariable String name,
+    public Recipe updateRecipe(@PathVariable String name,
                                                @RequestBody RecipeValueObject recipeValueObject) {
 
-        Recipe recipe = recipeService.updateRecipe(name, recipeValueObject);
-        log.info("Updated the recipe {} ", recipeValueObject.name);
-        return ResponseEntity.ok().body(recipe);
+        log.info("Updating the recipe {} ", recipeValueObject.name);
+        return recipeService.updateRecipe(name, recipeValueObject);
     }
 
+    @ResponseStatus(HttpStatus.OK)
     @GetMapping("/delete")
-    public ResponseEntity deleteRecipe(@RequestParam String name) {
+    public void deleteRecipe(@RequestParam String name) {
         recipeService.deleteRecipe(name);
-        return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 
+    @ResponseStatus(HttpStatus.OK)
     @GetMapping("/filter-recipes-by")
-    public ResponseEntity<List<Recipe>> findRecipeFilterBy(@RequestBody FilterValueObject filterValueObject) {
-
-        List<Recipe> recipes = recipeService.findRecipesFilteredBy(filterValueObject);
-        return ResponseEntity.ok().body(recipes);
+    public List<Recipe> filterRecipesBy(@RequestBody FilterValueObject filterValueObject) {
+        return recipeService.findRecipesFilteredBy(filterValueObject);
     }
 }
