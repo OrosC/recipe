@@ -71,7 +71,7 @@ public class RecipeController {
         return ResponseEntity.ok().body(recipe);
     }
 
-    @PatchMapping("/update/{name}")
+    @PatchMapping("/{name}/update-recipe-details")
     public ResponseEntity<Recipe> updateRecipe(@PathVariable String name,
                                                @RequestBody RecipeValueObject recipeValueObject) {
 
@@ -86,7 +86,7 @@ public class RecipeController {
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 
-    @GetMapping("/find-recipe-filter-by")
+    @GetMapping("/filter-recipes-by")
     public ResponseEntity<List<Recipe>> findRecipeFilterBy(@RequestBody FilterValueObject filterValueObject) {
 
         List<Recipe> recipes = recipeService.findRecipesFilteredBy(filterValueObject);
