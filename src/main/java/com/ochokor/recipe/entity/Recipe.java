@@ -1,5 +1,6 @@
 package com.ochokor.recipe.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.*;
@@ -17,6 +18,7 @@ import java.util.Set;
 @Entity
 public class Recipe {
 
+    @JsonIgnore
     @SequenceGenerator(name= "RECIPE_SEQUENCE", sequenceName = "RECIPE_SEQUENCE_ID", allocationSize = 1)
     @GeneratedValue(strategy=GenerationType.SEQUENCE, generator="RECIPE_SEQUENCE")
     @Id
@@ -31,12 +33,12 @@ public class Recipe {
 
     private boolean isVegetarian;
 
-    private Integer servings;
+    private int servings;
 
     @ToString.Exclude
     @JoinTable(name="recipe_ingredients",
             joinColumns = {@JoinColumn(name = "recipe_id")},
-            inverseJoinColumns = {@JoinColumn(name = "ingredients_id")}
+            inverseJoinColumns = {@JoinColumn(name = "ingredient_id")}
     )
     @OneToMany(targetEntity = Ingredient.class)
     private Set<Ingredient> ingredients;

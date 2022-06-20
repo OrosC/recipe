@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @NoArgsConstructor
-@Component
 public class RecipeValueObject {
     public String name;
     public String description;
@@ -15,4 +14,14 @@ public class RecipeValueObject {
     public boolean isVegetarian;
     public int servings;
     public List<String> ingredients;
+
+    public RecipeValueObject(String name, String description, String instructions, boolean isVegetarian, int servings
+            , String... ingredients) {
+        this.name = name;
+        this.description = description;
+        this.instructions = instructions;
+        this.isVegetarian = isVegetarian;
+        this.servings = servings;
+        this.ingredients = List.of(ingredients);
+    }
 }
