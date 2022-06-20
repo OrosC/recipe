@@ -1,4 +1,4 @@
-package com.ochokor.recipe;
+package com.ochokor.recipe.entity;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-@Getter
 @NoArgsConstructor
 @Component
 public class RecipeValueObject {

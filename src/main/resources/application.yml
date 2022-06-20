@@ -10,15 +10,15 @@ spring:
     password: ldishes
     username: ldishes
     name: ldishes
-    jpa:
-      database-platform: org.hibernate.dialect.H2Dialect
-      properties:
-        hibernate:
-          format_sql: true
-          auto-index-creation: true
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    properties:
       hibernate:
-        ddl-auto: update
-      show-sql: true
-      defer-datasource-initialization: true
-    h2:
-      console.enabled: true
+        format_sql: true
+        auto-index-creation: true
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    defer-datasource-initialization: true
+  h2:
+    console.enabled: true

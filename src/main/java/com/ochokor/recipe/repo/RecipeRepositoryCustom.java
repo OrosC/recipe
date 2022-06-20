@@ -1,10 +1,6 @@
 package com.ochokor.recipe.repo;
 
-import com.ochokor.recipe.Recipe;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
+import com.ochokor.recipe.entity.Recipe;
 
 public interface RecipeRepositoryCustom {
 
