@@ -1,12 +1,14 @@
 package com.ochokor.recipe.entity;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
-@NoArgsConstructor
+@Data
 public class RecipeValueObject {
     public String name;
     public String description;
@@ -15,7 +17,8 @@ public class RecipeValueObject {
     public int servings;
     public List<String> ingredients;
 
-    public RecipeValueObject(String name, String description, String instructions, boolean isVegetarian, int servings
+    public RecipeValueObject(String name, String description, String instructions, boolean isVegetarian,
+                             int servings
             , String... ingredients) {
         this.name = name;
         this.description = description;
@@ -23,5 +26,9 @@ public class RecipeValueObject {
         this.isVegetarian = isVegetarian;
         this.servings = servings;
         this.ingredients = List.of(ingredients);
+    }
+
+    public RecipeValueObject() {
+        this.ingredients = new ArrayList<>();
     }
 }

@@ -1,7 +1,9 @@
 package com.ochokor.recipe.entity;
 
 public class FilterValueObject {
-    public String include;
-    public String exclude;
+    public String includeIngredient;
+    public String excludeIngredient;
+    public String instructionKeyWord;
+    public int minimumServing;
     public boolean isVegetarian;
 }

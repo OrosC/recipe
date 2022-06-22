@@ -1,9 +1,6 @@
 package com.ochokor.recipe.service;
 
-import com.ochokor.recipe.entity.FilterValueObject;
-import com.ochokor.recipe.entity.Recipe;
-import com.ochokor.recipe.entity.RecipeValueObject;
-import com.ochokor.recipe.entity.Ingredient;
+import com.ochokor.recipe.entity.*;
 import com.ochokor.recipe.exception.RecipeNotFound;
 import com.ochokor.recipe.repositories.IngredientRepository;
 import com.ochokor.recipe.repositories.RecipeRepository;
@@ -12,6 +9,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -24,7 +23,8 @@ import java.util.stream.Collectors;
 public class RecipeService {
     private static Logger log = LoggerFactory.getLogger(RecipeService.class);
 
-    private final static String RECIPE_NOT_FOUND_MSG = "Recipe %s not found";
+    private final static String RECIPE_NOT_FOUND_MSG = "Recipe name %s not found";
+    private final static String RECIPE_ID_NOT_FOUND_MSG = "Recipe id %s not found";
 
     private final RecipeRepository recipeRepository;
     private final IngredientRepository ingredientRepository;
@@ -32,22 +32,20 @@ public class RecipeService {
     /**
      * Saves a new recipe to the database
      * @param recipeValueObject The value object hold the data for the recipe
+     * @param recipeUser The user
      */
-    public Recipe saveRecipe(RecipeValueObject recipeValueObject) {
+    public Recipe saveRecipe(RecipeUser recipeUser, RecipeValueObject recipeValueObject) {
         Recipe recipe = Recipe.builder()
                 .name(StringUtils.lowerCase(recipeValueObject.name))
                 .description(recipeValueObject.description)
                 .instructions(recipeValueObject.instructions)
                 .servings(recipeValueObject.servings)
                 .isVegetarian(recipeValueObject.isVegetarian)
+                .recipeUser(recipeUser)
                 .ingredients(new HashSet<>())
                 .build();
 
-        Set<Ingredient> ingredientsForRecipe = recipeValueObject.ingredients
-                .stream()
-                // Map the strings into Ingredient objects
-                .map(Ingredient::new)
-                .collect(Collectors.toSet());
+        Set<Ingredient> ingredientsForRecipe = convertIngredientStringToObjects(recipeValueObject);
 
         // Set the ingredients on the recipe so the join table is populated when saving the ingredients
         recipe.setIngredients(ingredientsForRecipe);
@@ -58,26 +56,14 @@ public class RecipeService {
     }
 
     /**
-     * @return A list of all available recipes in the database
+     * Retrieve a recipe given its Id
+     * @param id The id of the recipe
+     * @return The recipe
      */
-    public List<Recipe> getAllRecipes() {
-        return recipeRepository.findAll();
-    }
-
-    /**
-     * Saves a list of recipes
-     * @param valueObjectList The list of recipes
-     */
-    public void saveRecipes(List<RecipeValueObject> valueObjectList) {
-        valueObjectList.forEach(this::saveRecipe);
-    }
-
-    // Ignore
-    public List<Recipe> findRecipesFilteredBy(FilterValueObject filterValueObject) {
-        return recipeRepository.findAll()
-                .stream()
-                .filter(recipe -> !recipe.getName().equals(filterValueObject.exclude))
-                .collect(Collectors.toList());
+    public Recipe findRecipeById(Long id) {
+        // Convert name variable to lowercase before searching since the name of the recipe is stored in lowercase.
+        return recipeRepository.findById(id)
+            .orElseThrow(()-> new RecipeNotFound(String.format(RECIPE_ID_NOT_FOUND_MSG, id)));
     }
 
     /**
@@ -92,6 +78,12 @@ public class RecipeService {
                 .orElseThrow(()-> new RecipeNotFound(String.format(RECIPE_NOT_FOUND_MSG, name)));
     }
 
+    public List<Recipe> findRecipesByNameIn(List<String> names) {
+        // Convert name variable to lowercase before searching since the name of the recipe is stored in lowercase.
+        names.forEach(StringUtils::lowerCase);
+        return recipeRepository.findByNameIn(names);
+    }
+
     /**
      * Update a given recipe
      * @param name Name of recipe to be updated
@@ -99,8 +91,15 @@ public class RecipeService {
      * @return The updated recipe
      */
     public Recipe updateRecipe(String name, RecipeValueObject recipeValueObject) {
+        // Retrieve the recipe and update it
         Recipe original = findRecipeByName(name);
-        BeanUtils.copyProperties(original, recipeValueObject);
+        BeanUtils.copyProperties(recipeValueObject, original,  "name", "ingredients");
+
+        // If there are additional ingredients, append them to the recipe
+        Set<Ingredient> newIngredients = convertIngredientStringToObjects(recipeValueObject);
+        original.getIngredients().addAll(newIngredients);
+
+        handleSavingDuplicateIngredients(newIngredients);
         return recipeRepository.save(original);
     }
 
@@ -109,18 +108,29 @@ public class RecipeService {
      * Update the name of a given recipe
      * @param oldName The old name
      * @param newName The new name
-     * @return The updated recipe
      */
-    public Recipe updateRecipeName(String oldName, String newName) {
+    public void updateRecipeName(String oldName, String newName) {
+        String oldNameForUpdate = StringUtils.lowerCase(oldName);
         String newNameForUpdate = StringUtils.lowerCase(newName);
-        return recipeRepository.updateTheNameOfAGivenRecipe(oldName, newNameForUpdate);
+        recipeRepository.updateTheNameOfAGivenRecipeIgnoreCase(oldNameForUpdate, newNameForUpdate);
     }
 
+    /**
+     * Delete recipe
+     * @param name The name of the recipe to delete
+     */
     public void deleteRecipe(String name) {
         recipeRepository.findByName(name)
             .ifPresentOrElse(recipeRepository::delete, () -> {
                     throw new RecipeNotFound(String.format(RECIPE_NOT_FOUND_MSG, name));
                 });
+    }
+
+    /**
+     * @return A list of all recipes in the database
+     */
+    public Page<Recipe> findAllRecipes() {
+        return recipeRepository.findAll(Pageable.ofSize(50));
     }
 
     /**
@@ -137,7 +147,12 @@ public class RecipeService {
         ingredientRepository.saveAllAndFlush(newIngredientsToSave);
     }
 
-    //TODO get vegetarian dishes: filter on REcipe.isVegetarian
-    //TODO Specific ingredients
-    // Try and paginate response
+
+    private Set<Ingredient> convertIngredientStringToObjects(RecipeValueObject recipeValueObject) {
+        return recipeValueObject.ingredients
+            .stream()
+            // Map the strings into Ingredient objects
+            .map(Ingredient::new)
+            .collect(Collectors.toSet());
+    }
 }
