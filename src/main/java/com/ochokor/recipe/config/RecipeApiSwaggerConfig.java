@@ -24,7 +24,7 @@ public class RecipeApiSwaggerConfig implements WebMvcConfigurer {
         return new Docket(DocumentationType.OAS_30)
             .select()
             .apis(RequestHandlerSelectors.any())
-            .paths(PathSelectors.ant("/v1/**"))
+            .paths(PathSelectors.ant("/api/**"))
             .build()
             .apiInfo(apiInfo());
     }
